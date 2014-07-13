@@ -3,7 +3,7 @@ python:
   - 2.7
   - 3.3
   - 3.4
-install:
+before_install:
   - sudo apt-get update
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       wget http://repo.continuum.io/miniconda/Miniconda-3.4.2-Linux-x86_64.sh -O miniconda.sh;
@@ -16,14 +16,19 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
+install:
   # Create an environment that includes the dependency versions pinned to those
-  # available in Ubuntu 14.04 LTS.
+  # available in Ubuntu 14.04 LTS. SymPy 0.7.4.1 doesn't seem to work with
+  # Python 3.4. Theano does not support Python 3 yet.
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy=1.8.1 scipy=0.13.3 sympy=0.7.4.1 cython=0.20.1 theano=0.6.0;
       source activate test-environment;
       conda install sphinx numpydoc;
-    else
+    if [[ "$TRAVIS_PYTHON_VERSION" == "3.3" ]]; then
       conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy=1.8.1 scipy=0.13.3 sympy=0.7.4.1 cython=0.20.1;
+      source activate test-environment;
+    else
+      conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy=1.8.1 scipy=0.13.3 sympy=0.7.5 cython=0.20.1;
       source activate test-environment;
     fi
   - conda install setuptools  # for installation
@@ -32,6 +37,8 @@ install:
 script:
   - nosetests -v --with-coverage --cover-package=pydy
   - python setup.py install
+  # Only build the docs with Python 2.7. There doesn't seem to be a numpydoc
+  # Python 3 package.
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       cd docs;
       make html;
