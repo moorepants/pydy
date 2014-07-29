@@ -1,17 +1,18 @@
+#!/usr/bin/env python
+
 import os
 import socket
 import sys
 import threading
+import errno
 
 __all__ = ['Server']
 
+
 class Server(threading.Thread):
     """
-    A basic Socket server.
-    This server is used for fetching
-    static files from the pydy_viz
-    source and rendering them to
-    the browser.
+    A basic Socket server. This server is used for fetching static files
+    from the pydy.viz source and rendering them to the browser.
 
     """
     def __init__(self, json='data.json'):
@@ -21,10 +22,8 @@ class Server(threading.Thread):
         Parameters
         ==========
         json : str, optional
-        path to the saved json file
-        for visualization, relative to
-        current working directory.
-
+            Path to the saved json file for visualization, relative to
+            current working directory.
 
         """
         threading.Thread.__init__(self)
@@ -32,15 +31,17 @@ class Server(threading.Thread):
         self.port = 8000
         host = ''
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self.socket.bind((host, self.port))
-        except:
-            self.port += 1
+
+        bound = False
+
+        while not bound:
             try:
                 self.socket.bind((host, self.port))
             except:
                 self.port += 1
-                self.socket.bind((host, self.port))
+            else:
+                bound = True
+
         self.socket.listen(5)
 
     def _parse_data(self, data):
@@ -104,8 +105,8 @@ class Server(threading.Thread):
                 conn, addr = self.socket.accept()
                 data = conn.recv(1024)
                 sent_data = self._parse_data(data)
-                conn.send('HTTP/1.1 200 OK\r\n\r\n')
-                conn.send(sent_data)
+                conn.send(b'HTTP/1.1 200 OK\r\n\r\n')
+                conn.send(sent_data.encode('UTF-8'))
                 conn.close()
             except KeyboardInterrupt:
                 print("Are you sure you want to shutdown[Y/N]?")

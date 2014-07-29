@@ -19,9 +19,12 @@ from .light import PointLight
 __all__ = ['Scene']
 
 try:
-    from IPython.lib import backgroundjobs as bg
+    import IPython
 except ImportError:
     IPython = None
+else:
+    from IPython.lib import backgroundjobs as bg
+    from IPython import get_ipython
 
 
 class Scene(object):
@@ -417,11 +420,14 @@ class Scene(object):
         calling this method
 
         """
-        try:
-            # If it detects any IPython frontend
-            # (qtconsole, interpreter or notebook)
-            config = get_ipython().config
-            self._display_from_ipython()
-
-        except:
+        if IPython is not None:
+            try:
+                # If it detects any IPython frontend
+                # (qtconsole, interpreter or notebook)
+                get_ipython().config
+            except AttributeError:
+                self._display_from_interpreter()
+            else:
+                self._display_from_ipython()
+        else:
             self._display_from_interpreter()

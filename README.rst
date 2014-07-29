@@ -37,19 +37,15 @@ The PyDy workflow has hard dependecies on these Python packages:
 SciPy Stack
 
 - SymPy_ >= 0.7.4.1
-- NumPy_ >= 1.6.1
-- SciPy_ >= 0.9.0
-- IPython_ >= 0.13.0
+- NumPy_ >= 1.8.1
+- SciPy_ >= 0.13.3
+- IPython_ >= 1.2.1
 
 It's best to install the SciPy Stack dependencies using the instructions_
 provided on the SciPy website.
 
 Once the dependencies are installed, the package can be installed from PyPi
 using::
-
-   $ easy_install pydy
-
-or::
 
    $ pip install pydy
 
@@ -173,7 +169,7 @@ Optional Dependencies
 To enable different code generation backends, you can install the various
 optional dependencies:
 
-- Cython: >=0.15.1
+- Cython: >=0.20.1
 - Theano: >=0.6.0
 
 Usage
@@ -296,6 +292,11 @@ Related Packages
 Release Notes
 =============
 
+0.3.0
+-----
+
+- Python 3 support added.
+
 0.2.1
 -----
 
@@ -315,8 +316,8 @@ Release Notes
 Citation
 ========
 
-If you make use of the PyDy toolchain in you work or research please cite us in
-your publications or on the web. This citation can be used:
+If you make use of the PyDy tool chain in you work or research please cite us
+in your publications or on the web. This citation can be used:
 
    Gilbert Gede, Dale L Peterson, Angadh S Nanjangud, Jason K Moore, and Mont
    Hubbard, "Constrained Multibody Dynamics With Python: From Symbolic Equation
