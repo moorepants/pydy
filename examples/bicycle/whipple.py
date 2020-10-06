@@ -146,10 +146,11 @@ g = sm.symbols('g', real=True)
 mc, md, me, mf = sm.symbols('mc md me mf', real=True, positive=True)
 
 # inertia
+# TODO : moments of inertia of two frames can only be positive
 ic11, ic22, ic33, ic31 = sm.symbols('ic11 ic22 ic33 ic31', real=True)
-id11, id22 = sm.symbols('id11 id22', real=True)
+id11, id22 = sm.symbols('id11 id22', real=True, positive=True)
 ie11, ie22, ie33, ie31 = sm.symbols('ie11 ie22 ie33 ie31', real=True)
-if11, if22 = sm.symbols('if11 if22', real=True)
+if11, if22 = sm.symbols('if11 if22', real=True, positive=True)
 
 ###########
 # Specified
@@ -350,7 +351,7 @@ kane = mec.KanesMethod(N,
                        u_dependent=[u3, u5, u8],  # yaw rate, pitch rate, front wheel rate
                        velocity_constraints=nonholonomic)
 
-fr, frstar = kane.kanes_equations(forces, bodies)
+fr, frstar = kane.kanes_equations(bodies, forces)
 
 mass_matrix = kane.mass_matrix
 print('The mass matrix is a function of these dynamic variables:')
