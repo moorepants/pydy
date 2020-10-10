@@ -3,7 +3,7 @@
 import sympy as sm
 import sympy.physics.mechanics as me
 
-TIME = me.dynamicsymbols('t')
+TIME = me.dynamicsymbols._t
 
 
 def decompose_fstar(fstar, ind_gen_speeds, dep_gen_speeds=None):
