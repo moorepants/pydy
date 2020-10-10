@@ -3,15 +3,16 @@
 import sympy as sm
 import sympy.physics.mechanics as me
 
+TIME = me.dynamicsymbols('t')
 
-def decompose_fstar(fstar, ind_gen_speeds, dep_gen_speeds=None,
-                    time_symbol=None):
+
+def decompose_fstar(fstar, ind_gen_speeds, dep_gen_speeds=None):
     """Decomposes the generalized inertial forces, Kane's F*, into the linear
-    coefficient matrices corresponding to the indepdendent and dependent
+    coefficient matrices corresponding to the independent and dependent
     generalized speeds and the remaining vector that of terms that are not
-    coffecients.
+    coefficients.
 
-    F* = A_F*I * uI' + A_F*D * uD' + B_F*
+    Fs = A_FsI * uI' + A_FsD * uD' + B_Fs
 
     Parameters
     ==========
@@ -34,11 +35,7 @@ def decompose_fstar(fstar, ind_gen_speeds, dep_gen_speeds=None,
         Linear coefficients of the depedent generalized accelerations.
 
     """
-
-    if time_symbol is None:
-        t = me.dynamicsymbols._t
-    else:
-        t = time_symbol
+    t = TIME
 
     uI_dot = sm.Matrix(ind_gen_speeds).diff(t)
     A_FstarI = fstar.jacobian(uI_dot)
@@ -90,13 +87,106 @@ def decompose_nonholonomic(G, ind_gen_speeds, dep_gen_speeds):
     return A_GuI, A_GuD, B_G
 
 
-def formulate_mass_matrix_form(Frstar, Fr, uI, uD, kin_diff_map, nonholonomic,
-                               time_symbol=None):
+def formulate_equations_motion(newtonian_frame,
+                               bodies,
+                               generalized_coordinates, # q
+                               generalized_speed_defs,  # u: f(q', q, t)
+                               independent_gen_speeds,  # uI
+                               # following should be optional
+                               dependent_gen_speeds,  # uD
+                               motion_constraints,  # G(u, q, t) = 0
+                               loads,
+                               sub_explicit_gen_dep_speeds=False):
+    """
 
-    if time_symbol is None:
-        t = me.dynamicsymbols._t
+    M*uI' = F
+
+    netownian_frame : ReferenceFrame
+        Newtonian reference frame in which the Kane's equations are being
+        calculated with respect to.
+    bodies : Sequence[Union[Particle, RigidBody]]
+        All of the particles and rigid bodies that make up the system S.
+    generalized_coordinates : Sequence[Function(t)], len(q)
+    generalized_speed_defs : Mapping[Function(t), Expr], len(q)
+    independent_gen_speeds : Sequence[Function(t)], len(p)
+    dependent_gen_speeds : Sequence[Function(t)], len(m)
+    motion_constraints : Sequence[Expr], len(m)
+    loads : Mapping[Union[Point, Frame], Vector]
+        Mapping of points to their resultant applied force vector and reference
+        frames to their resultant applied torque vector.
+    sub_explicit_gen_dep_speeds : boolean
+
+    Returns
+    =======
+    M : Matrix, shape(p, p)
+    F : Matrix, shape(p, 1)
+
+    """
+    t = TIME
+
+    N = newtonian_frame
+    q = generalized_coordinates
+    uI = independent_gen_speeds
+    uD = dependent_gen_speeds
+
+    print('Solving for the time derivatives of the generalized speeds.')
+    kin_diff_map = solve_for_qdots(q, generalized_speed_defs)
+
+    print('Solving for the dependent generalized speeds')
+    A_GuI, A_GuD, B_G = decompose_nonholonomic(motion_constraints, uI, uD)
+    uD_of_uI = A_GuD.LUsolve(-A_GuI*sm.Matrix(uI) - B_G)
+
+    if sub_explicit_gen_dep_speeds:
+        uD_repl = dict(zip(uD, uD_of_uI))
     else:
-        t = time_symbol
+        # dependent generalized speeds should be functions of uD(uI, q, t)
+        args = tuple(me.find_dynamicsymbols(uD_of_uI))
+        uD_funcs = [sm.Function(uDi.name)(*args) for uDi in uD]
+        uD_repl = dict(zip(uD, uD_funcs))  # uD(t): uD(uI, q, t)
+        uD_func_repl = dict(zip(uD_funcs, uD))  # uD(uI, q, t): uD(t)
+        print('Partials of the dependent speed expressions with respect to the indepdendent speeds.')
+        partials_of_uD = uD_of_uI.jacobian(uI).xreplace(kin_diff_map)
+        temp_partial_repl = {}
+        partial_repl = {}
+        for i, uDi in enumerate(uD):
+            for j, uIj in enumerate(uI):
+                s = me.dynamicsymbols('d{}d{}'.format(uDi.name, uIj.name))
+                temp_partial_repl[uD_funcs[i].diff(uIj)] = s
+                partial_repl[s] = partials_of_uD[i, j]
+
+    print('Generating the generalized active forces')
+    Fr = generalized_active_forces(N, uI, bodies, loads,
+                                   dependent_generalized_speeds=uD_repl)
+    print('Generating the generalized inertia forces')
+    Frstar = generalized_inertia_forces(N, uI, kin_diff_map, bodies,
+                                        dependent_generalized_speeds=uD_repl)
+
+    if not sub_explicit_gen_dep_speeds:
+        Fr = Fr.xreplace(temp_partial_repl).xreplace(uD_func_repl)
+        Frstar = Frstar.xreplace(temp_partial_repl).xreplace(uD_func_repl)
+
+    print('Formulating the mass matrix form of the equations of motion.')
+    M, F = formulate_mass_matrix_form(Frstar, Fr, uI, uD, kin_diff_map,
+                                      motion_constraints)
+
+    if not sub_explicit_gen_dep_speeds:
+        M = M.xreplace(partial_repl)
+        F = F.xreplace(partial_repl)
+
+    #print('Fr*')
+    #print(list(sm.ordered(mec.find_dynamicsymbols(Frstar))))
+    #print('M')
+    #print(list(sm.ordered(mec.find_dynamicsymbols(M))))
+    #print('F')
+    #print(list(sm.ordered(mec.find_dynamicsymbols(F))))
+
+    return M, F
+
+
+def formulate_mass_matrix_form(Frstar, Fr, uI, uD, kin_diff_map,
+                               nonholonomic):
+
+    t = TIME
 
     print('Taking the time derivative of the nonholomic constraints.')
     A_GuI, A_GuD, B_G = decompose_nonholonomic(nonholonomic, uI, uD)
@@ -325,3 +415,50 @@ def replace_dep_speeds_chain_rule_derivatives(expr, u_I, u_D):
     print(second_repl)
 
     return expr.xreplace(first_repl).xreplace(second_repl)
+
+
+def solve_for_qdots(generalized_coordinates, generalized_speed_definitions):
+    """Returns a mapping of generalized coordinate time derivatites to
+    expressions of the generalized speeds, coordinates, and time.
+
+    Parameters
+    ==========
+    generalized_coordinates : Sequence[Function(t)], len(q)
+        Arbitrary functions of time representing all of the generalized
+        coordinates.
+    gen_speed_definitions : Mapping[Function(t), Expr], len(q)
+        Mapping of arbitrary functions of time representing the generalized
+        speeds to expressions involving the generalized coordinates and their
+        time derivatives, i.e. u = f(q', q, t).
+
+    Returns
+    =======
+    qdots : Mapping[Derivative(Function(t), t), Expr]
+        Mapping of the time derivatives of the generalized coordinates to
+        expressions involving the generalized speeds, i.e. q' = f(u, q, t).
+
+    """
+    t = TIME
+
+    qdot = [qi.diff(t) for qi in generalized_coordinates]
+
+    # the order of the expressions in K does not matter here
+    K = sm.Matrix([ui - expr for ui, expr in
+                   generalized_speed_definitions.items()])
+
+    repl = {qdoti: 0 for qdoti in qdot}
+
+    # Kinematical differential equations should be linear in the qdot's and the
+    # u's. Both of these are true:
+    # 1) K = A_Kqd(q,t)*q(t)' + A_Ku(q,t)*u + B_K(q,t) = 0
+    # 2) K = A_Kqd(q,t)*q(t)' + B_K(u, q, t) = 0
+    # 2) is all that is needed to solve uniquely for the qdot's with this
+    # linear system:
+    # A_Kqd*q' = -B_K
+
+    A_Kqd = K.jacobian(qdot)
+    B_K = K.xreplace(repl)
+
+    qdot_exprs = A_Kqd.LUsolve(-B_K)
+
+    return dict(zip(qdot, qdot_exprs))
