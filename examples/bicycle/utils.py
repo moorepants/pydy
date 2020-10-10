@@ -28,10 +28,10 @@ def decompose_fstar(fstar, ind_gen_speeds, dep_gen_speeds=None):
 
     Returns
     =======
-    B_Fstar : Matrix, shape(p, 1)
-    A_FstarI : Matrix, shape(p, p)
+    B_Fs : Matrix, shape(p, 1)
+    A_FI : Matrix, shape(p, p)
         Linear coefficients of the indepedent generalized accelerations.
-    A_FstarD : Matrix, shape(p, m)
+    A_FsD : Matrix, shape(p, m)
         Linear coefficients of the depedent generalized accelerations.
 
     """
@@ -140,6 +140,9 @@ def formulate_equations_motion(newtonian_frame,
         uD_repl = dict(zip(uD, uD_of_uI))
     else:
         # dependent generalized speeds should be functions of uD(uI, q, t)
+        # TODO : change this to a function
+        # uD_repl, uD_func_repl, temp_partial_repl, partial_repl = f(uD_of_uI,
+        # uD, uI)
         args = tuple(me.find_dynamicsymbols(uD_of_uI))
         uD_funcs = [sm.Function(uDi.name)(*args) for uDi in uD]
         uD_repl = dict(zip(uD, uD_funcs))  # uD(t): uD(uI, q, t)
@@ -388,7 +391,7 @@ def inv_of_3_by_3(matrix):
     # Using the equations defined above, calculate the inverse matrix entries.
     invA[0, 0] = (e*k - f*h) / det
     invA[0, 1] = -(b*k - c*h) / det
-    invA[0, 2] = - (b*f - c*e) / det
+    invA[0, 2] = (b*f - c*e) / det
     invA[1, 0] = -(d*k - f*g) / det
     invA[1, 1] = (a*k - c*g) / det
     invA[1, 2] = -(a*f - c*d) / det
@@ -418,7 +421,7 @@ def replace_dep_speeds_chain_rule_derivatives(expr, u_I, u_D):
 
 
 def solve_for_qdots(generalized_coordinates, generalized_speed_definitions):
-    """Returns a mapping of generalized coordinate time derivatites to
+    """Returns a mapping of generalized coordinate time derivatives to
     expressions of the generalized speeds, coordinates, and time.
 
     Parameters
