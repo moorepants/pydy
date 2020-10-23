@@ -194,7 +194,7 @@ setup(name="boogly_bee",
                 os.remove(filename)
 
 
-def test_equivalencys():
+def test_cse_equivalency():
 
     sys = n_link_pendulum_on_cart(n=10, cart_force=True, joint_torques=True)
 
@@ -225,6 +225,7 @@ def test_equivalencys():
     F2 = np.zeros(len(x))
     c_eval_M_F_with_cse(x_vals, r_vals, p_vals, M2, F2)
 
+    # check xreplace for the heck of it too
     M4 = sm.matrix2numpy(M.xreplace(subs_dict), dtype=float)
     F4 = sm.matrix2numpy(F.xreplace(subs_dict), dtype=float)
 
