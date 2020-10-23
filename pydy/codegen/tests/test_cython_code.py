@@ -5,7 +5,7 @@ import os
 import numpy as np
 import sympy as sm
 
-from ...models import multi_mass_spring_damper
+from ...models import multi_mass_spring_damper, n_link_pendulum_on_cart
 from ..cython_code import CythonMatrixGenerator
 
 
@@ -192,3 +192,51 @@ setup(name="boogly_bee",
             filename = self.prefix + suffix
             if os.path.isfile(filename):
                 os.remove(filename)
+
+
+def test_equivalencys():
+
+    sys = n_link_pendulum_on_cart(n=10, cart_force=True, joint_torques=True)
+
+    M = sys.eom_method.mass_matrix_full
+    F = sys.eom_method.forcing_full
+
+    x = sys.states
+    r = sys.specifieds_symbols
+    p = sys.constants_symbols
+
+    x_vals = np.random.random(len(x))
+    r_vals = np.random.random(len(r))
+    p_vals = np.random.random(len(p))
+
+    subs_dict = dict(zip(x, x_vals))
+    subs_dict.update(dict(zip(r, r_vals)))
+    subs_dict.update(dict(zip(p, p_vals)))
+
+    gen1 = CythonMatrixGenerator([x, r, p], [M, F], cse=False)
+    c_eval_M_F_no_cse = gen1.compile()
+    M1 = np.zeros(len(x)*len(x))
+    F1 = np.zeros(len(x))
+    c_eval_M_F_no_cse(x_vals, r_vals, p_vals, M1, F1)
+
+    gen2 = CythonMatrixGenerator([x, r, p], [M, F], cse=True)
+    c_eval_M_F_with_cse = gen2.compile()
+    M2 = np.zeros(len(x)*len(x))
+    F2 = np.zeros(len(x))
+    c_eval_M_F_with_cse(x_vals, r_vals, p_vals, M2, F2)
+
+    M4 = sm.matrix2numpy(M.xreplace(subs_dict), dtype=float)
+    F4 = sm.matrix2numpy(F.xreplace(subs_dict), dtype=float)
+
+    # Compare the other forms to the evalf form.
+    M3 = sm.matrix2numpy(M.evalf(subs=subs_dict), dtype=float)
+    F3 = sm.matrix2numpy(F.evalf(subs=subs_dict), dtype=float)
+
+    np.testing.assert_allclose(M1.reshape((len(x), len(x))), M3)
+    np.testing.assert_allclose(F1, np.squeeze(F3))
+
+    np.testing.assert_allclose(M2.reshape((len(x), len(x))), M3)
+    np.testing.assert_allclose(F2, np.squeeze(F3))
+
+    np.testing.assert_allclose(M4, M3)
+    np.testing.assert_allclose(F4, F3)
