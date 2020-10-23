@@ -196,6 +196,7 @@ setup(name="boogly_bee",
 
 def test_cse_equivalency():
 
+    # NOTE : I ran this up to n=18 and it passes locally.
     sys = n_link_pendulum_on_cart(n=10, cart_force=True, joint_torques=True)
 
     M = sys.eom_method.mass_matrix_full
@@ -230,6 +231,9 @@ def test_cse_equivalency():
     F4 = sm.matrix2numpy(F.xreplace(subs_dict), dtype=float)
 
     # Compare the other forms to the evalf form.
+    # TODO : This would be more accurate if we created SymPy floats from
+    # strings, i.e. sympy.Float('1.34994959559595959595940303034'), so that the
+    # arbitrary precision is actually computed.
     M3 = sm.matrix2numpy(M.evalf(subs=subs_dict), dtype=float)
     F3 = sm.matrix2numpy(F.evalf(subs=subs_dict), dtype=float)
 
