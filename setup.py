@@ -11,6 +11,7 @@ exec(open('pydy/version.py').read())
 
 install_requires = [
     'numpy>=1.21.5',
+    'packaging>=21.3',
     'scipy>=1.8.0',
     'setuptools>=44.1.1',
     'sympy>=1.9',

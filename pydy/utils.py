@@ -3,7 +3,7 @@
 import re
 import textwrap
 
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 from setuptools import __version__ as SETUPTOOLS_VERSION
 import sympy as sm
 from sympy.core.function import AppliedUndef
