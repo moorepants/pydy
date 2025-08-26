@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 import sympy as sm
 
 from ...models import multi_mass_spring_damper

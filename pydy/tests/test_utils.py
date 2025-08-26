@@ -2,7 +2,7 @@
 
 import pytest
 
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 from setuptools import __version__ as SETUPTOOLS_VERSION
 
 from sympy import cos, sin, tan, sqrt, Matrix

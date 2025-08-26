@@ -5,7 +5,7 @@ matrices generated from sympy.physics.mechanics."""
 
 import os
 
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 import sympy as sm
 
 SYMPY_VERSION = sm.__version__

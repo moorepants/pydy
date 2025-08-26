@@ -113,6 +113,7 @@ PyDy has hard dependencies on the following software\ [#]_:
 
 - Python >= 3.9
 - setuptools >= 44.1.1
+- packaging >= 21.3
 - NumPy_ >= 1.21.5
 - SciPy_ >= 1.8.0
 - SymPy_ >= 1.9

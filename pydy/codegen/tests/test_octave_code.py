@@ -1,4 +1,4 @@
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 from sympy import ordered, __version__
 
 from ...models import multi_mass_spring_damper
