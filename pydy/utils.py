@@ -75,7 +75,7 @@ def wrap_and_indent(lines, indentation=4, width=79, continuation=None,
     # deal with that.
     # add whitespace before and after [*/] binary operands between
     # subexpressions and input/output
-    pattern = re.compile('(\w\])([*/])(\w)')
+    pattern = re.compile(r'(\w\])([*/])(\w)')
     for line in lines:
         if line != '\n':
             line = pattern.sub(lambda m: ' '.join(m.groups()), line)
