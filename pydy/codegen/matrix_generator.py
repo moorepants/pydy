@@ -24,7 +24,7 @@ class MatrixGenerator(object):
     _line_contin = None
     _comment_char = '#'
 
-    def __init__(self, arguments, matrices, cse=True):
+    def __init__(self, arguments, matrices, cse=True, verify_arguments=False):
         """
 
         Parameters
@@ -41,27 +41,30 @@ class MatrixGenerator(object):
             sympy.Function that are functions of me.dynamicsymbols._t.
         cse : boolean
             Find and replace common sub-expressions in ``matrices`` if True.
+        verify_arguments : boolean
+            If true, all symbols in ``matrices`` will be extracted and value
+            errors will be raised if ``arguments`` is missing any symbols. This
+            can be prohibitively slow for very large expressions.
 
         """
 
-        required_args = set()
+        if verify_arguments:
 
-        for matrix in matrices:
-            # TODO : SymPy 0.7.4 does not have Matrix.free_symbols so we
-            # manually compute them instead of calling:
-            # required_args |= matrix.free_symbols
-            required_args |= set().union(*[i.free_symbols for i in matrix])
-            required_args |= find_dynamicsymbols(matrix)
+            required_args = set()
 
-        if me.dynamicsymbols._t in required_args:
-            required_args.remove(me.dynamicsymbols._t)
+            for matrix in matrices:
+                required_args |= matrix.free_symbols
+                required_args |= find_dynamicsymbols(matrix)
 
-        all_arguments = set(itertools.chain(*arguments))
+            if me.dynamicsymbols._t in required_args:
+                required_args.remove(me.dynamicsymbols._t)
 
-        for required_arg in required_args:
-            if required_arg not in all_arguments:
-                msg = "{} is missing from the argument sequences."
-                raise ValueError(msg.format(required_arg))
+            all_arguments = set(itertools.chain(*arguments))
+
+            for required_arg in required_args:
+                if required_arg not in all_arguments:
+                    msg = "{} is missing from the argument sequences."
+                    raise ValueError(msg.format(required_arg))
 
         self.matrices = matrices
         self.arguments = arguments
