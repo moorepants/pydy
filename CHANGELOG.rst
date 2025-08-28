@@ -5,6 +5,30 @@ Release Notes
 0.8.0 (TBA)
 ===========
 
+- Support NumPy 2.0. [PR `#502`_]
+- Migrate from nose to pytest. [PR `#503`_]
+- Bump minimum dependency versions to match those in Ubuntu 22.04 LTS and drop
+  support for Python 3.8. [PR `#504`_]
+- Update benchmark script to run without optional dependencies. [PR `#505`_]
+- Fixed bug where incorrect specified arguments were being selected if using
+  functions for specifieds. [PR `#510`_]
+- Support math symbols in C compilation on Windows. [PR `#511`_]
+- Add support for Python 3.13. [PR `#512`_]
+- Add dependency on packaging package for version parsing and comparison (in
+  place of deprecated pkg_resources). [PR `#514`_]
+- Make argument checking optional the MatrixGenerator due to low performance on
+  large expressions. [PR `#515`_]
+
+.. _#502: https://github.com/pydy/pydy/pull/502
+.. _#503: https://github.com/pydy/pydy/pull/503
+.. _#504: https://github.com/pydy/pydy/pull/504
+.. _#505: https://github.com/pydy/pydy/pull/505
+.. _#510: https://github.com/pydy/pydy/pull/510
+.. _#511: https://github.com/pydy/pydy/pull/511
+.. _#512: https://github.com/pydy/pydy/pull/512
+.. _#514: https://github.com/pydy/pydy/pull/514
+.. _#515: https://github.com/pydy/pydy/pull/515
+
 0.7.1 (March 4, 2023)
 =====================
 
