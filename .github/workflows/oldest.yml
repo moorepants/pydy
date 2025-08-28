@@ -34,7 +34,7 @@ jobs:
           channels: conda-forge
       - name: Install basic dependencies
         run: |
-          conda install -q -y coverage cython=0.29.* matplotlib=3.5.* packaging=21.3 pytest pytest-cov numpy=1.21.* pythreejs sympy=1.9.* scipy=1.8.* "setuptools>=44.1.1,<80"
+          conda install -q -y coverage cython=0.29.* matplotlib=3.5.* packaging=21.3 pytest pytest-cov numpy=1.21.* pythreejs sympy=1.9.* scipy=1.8.* "setuptools>=44.1.1,<70"
       - name: Test with pytest
         run: pytest -cov .
       - name: Test installation of PyDy
