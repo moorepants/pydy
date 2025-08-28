@@ -42,7 +42,7 @@ class TestCMatrixGenerator():
         arguments = self.arguments[:-1]
 
         with pytest.raises(ValueError):
-            CMatrixGenerator(arguments, self.matrices)
+            CMatrixGenerator(arguments, self.matrices, verify_arguments=True)
 
     def test_generate_cse(self):
 
